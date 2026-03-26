@@ -5,6 +5,7 @@ import BaseModelProvider from '../../base/provider';
 import { Model, ModelList, ProviderMetadata } from '../../types';
 import OpenAILLM from '../openai/openaiLLM';
 import OpenCodeGoAnthropicLLM from './opencodeGoAnthropicLLM';
+import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
 
 interface OpenCodeGoConfig {
   apiKey: string;
@@ -42,6 +43,7 @@ const providerConfigFields: UIConfigField[] = [
     description: 'Your OpenCode Go API key',
     required: true,
     placeholder: 'OpenCode Go API Key',
+    env: 'OPENCODE_GO_API_KEY',
     scope: 'server',
   },
 ];
@@ -55,10 +57,26 @@ class OpenCodeGoProvider extends BaseModelProvider<OpenCodeGoConfig> {
   }
 
   async getModelList(): Promise<ModelList> {
-    return this.getDefaultModels();
+    const defaultModels = await this.getDefaultModels();
+    const configProvider = getConfiguredModelProviderById(this.id)!;
+
+    return {
+      embedding: [
+        ...defaultModels.embedding,
+        ...configProvider.embeddingModels,
+      ],
+      chat: [...defaultModels.chat, ...configProvider.chatModels],
+    };
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {
+    const modelList = await this.getModelList();
+    const exists = modelList.chat.find((m) => m.key === key);
+
+    if (!exists) {
+      throw new Error('Error Loading OpenCode Go Chat Model. Invalid Model Selected');
+    }
+
     if (openAICompatibleModels.has(key)) {
       return new OpenAILLM({
         apiKey: this.config.apiKey,
@@ -74,7 +92,7 @@ class OpenCodeGoProvider extends BaseModelProvider<OpenCodeGoConfig> {
       });
     }
 
-    throw new Error('Error Loading OpenCode Go Chat Model. Invalid Model Selected');
+    throw new Error('Error Loading OpenCode Go Chat Model. Model is configured but unsupported by the provider implementation.');
   }
 
   async loadEmbeddingModel(_key: string): Promise<BaseEmbedding<any>> {

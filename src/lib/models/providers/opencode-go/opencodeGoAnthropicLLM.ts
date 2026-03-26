@@ -70,14 +70,30 @@ class OpenCodeGoAnthropicLLM extends BaseLLM<OpenCodeGoAnthropicConfig> {
 
         if (message.role === 'assistant') {
           if (message.tool_calls && message.tool_calls.length > 0) {
-            return {
-              role: 'assistant',
-              content: message.tool_calls.map((toolCall) => ({
-                type: 'tool_use',
+            const contentBlocks: Array<
+              | { type: 'text'; text: string }
+              | { type: 'tool_use'; id: string; name: string; input: Record<string, any> }
+            > = [];
+
+            if (message.content.trim().length > 0) {
+              contentBlocks.push({
+                type: 'text',
+                text: message.content,
+              });
+            }
+
+            contentBlocks.push(
+              ...message.tool_calls.map((toolCall) => ({
+                type: 'tool_use' as const,
                 id: toolCall.id,
                 name: toolCall.name,
                 input: toolCall.arguments,
               })),
+            );
+
+            return {
+              role: 'assistant',
+              content: contentBlocks,
             };
           }
 
