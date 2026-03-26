@@ -8,6 +8,7 @@ import GroqProvider from './groq';
 import LemonadeProvider from './lemonade';
 import AnthropicProvider from './anthropic';
 import LMStudioProvider from './lmstudio';
+import OpenCodeGoProvider from './opencode-go';
 
 export const providers: Record<string, ProviderConstructor<any>> = {
   openai: OpenAIProvider,
@@ -18,6 +19,7 @@ export const providers: Record<string, ProviderConstructor<any>> = {
   lemonade: LemonadeProvider,
   anthropic: AnthropicProvider,
   lmstudio: LMStudioProvider,
+  'opencode-go': OpenCodeGoProvider,
 };
 
 export const getModelProvidersUIConfigSection =
