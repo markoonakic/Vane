@@ -5,7 +5,6 @@ import BaseModelProvider from '../../base/provider';
 import { Model, ModelList, ProviderMetadata } from '../../types';
 import OpenAILLM from '../openai/openaiLLM';
 import OpenCodeGoAnthropicLLM from './opencodeGoAnthropicLLM';
-import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
 
 interface OpenCodeGoConfig {
   apiKey: string;
@@ -57,16 +56,7 @@ class OpenCodeGoProvider extends BaseModelProvider<OpenCodeGoConfig> {
   }
 
   async getModelList(): Promise<ModelList> {
-    const defaultModels = await this.getDefaultModels();
-    const configProvider = getConfiguredModelProviderById(this.id)!;
-
-    return {
-      embedding: [
-        ...defaultModels.embedding,
-        ...configProvider.embeddingModels,
-      ],
-      chat: [...defaultModels.chat, ...configProvider.chatModels],
-    };
+    return this.getDefaultModels();
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {
